@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Grid Puzzles — Sudoku & KenKen</title>
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css" />
+  <script src="auth.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <!-- Auth Screen -->
+  <div id="auth-screen" class="screen centered">
+    <div class="auth-card">
+      <img src="logo.svg" class="logo" alt="Logo">
+      <h1>Grid Puzzles</h1>
+      <p class="muted">Sign up or log in to access the puzzle generator</p>
+
+      <div class="auth-tabs">
+        <button id="tab-login" class="active" aria-controls="login-form">Log in</button>
+        <button id="tab-signup" aria-controls="signup-form">Sign up</button>
+      </div>
+
+      <form id="login-form" class="auth-form">
+        <div class="field">
+          <label for="login-username">Username</label>
+          <input id="login-username" name="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="primary">Log in</button>
+        <p id="login-msg" class="msg"></p>
+      </form>
+
+      <form id="signup-form" class="auth-form hidden">
+        <div class="field">
+          <label for="signup-username">Username</label>
+          <input id="signup-username" name="username" minlength="3" required>
+        </div>
+        <div class="field">
+          <label for="signup-password">Password</label>
+          <input id="signup-password" name="password" type="password" minlength="8" required>
+          <small class="muted">Min 8 chars. Use a unique password (stored locally only).</small>
+        </div>
+        <div class="field">
+          <label for="signup-password2">Confirm password</label>
+          <input id="signup-password2" name="password2" type="password" minlength="8" required>
+        </div>
+        <button type="submit" class="primary">Create account</button>
+        <p id="signup-msg" class="msg"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- App Screen -->
+  <div id="app-screen" class="screen hidden">
+    <header class="app-header">
+      <div class="brand">
+        <img src="logo.svg" class="logo" alt="Logo">
+        <h1>Grid Puzzles</h1>
+      </div>
+      <div class="user">
+        <span id="current-username"></span>
+        <button id="logout-btn" class="ghost">Log out</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="tabs">
+        <button class="tab active" data-tab="sudoku">Sudoku</button>
+        <button class="tab" data-tab="kenken">KenKen</button>
+      </div>
+
+      <!-- Sudoku Panel -->
+      <section id="panel-sudoku" class="panel">
+        <div class="controls">
+          <label>Difficulty
+            <select id="sudoku-diff">
+              <option value="easy">Easy</option>
+              <option value="medium" selected>Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </label>
+          <button id="sudoku-new" class="primary">New Sudoku</button>
+          <button id="sudoku-check">Check</button>
+          <button id="sudoku-solve">Solve</button>
+          <button id="sudoku-clear">Clear</button>
+          <span id="sudoku-status" class="status"></span>
+        </div>
+
+        <div id="sudoku-board" class="board sudoku-grid" aria-label="Sudoku grid"></div>
+      </section>
+
+      <!-- KenKen Panel -->
+      <section id="panel-kenken" class="panel hidden">
+        <div class="controls">
+          <label>Size
+            <select id="kenken-size">
+              <option value="4" selected>4x4</option>
+              <option value="5">5x5</option>
+              <option value="6">6x6</option>
+            </select>
+          </label>
+          <button id="kenken-new" class="primary">New KenKen</button>
+          <button id="kenken-check">Check</button>
+          <button id="kenken-solve">Solve</button>
+          <button id="kenken-clear">Clear</button>
+          <span id="kenken-status" class="status"></span>
+        </div>
+
+        <div id="kenken-board" class="board kenken-grid" aria-label="KenKen grid"></div>
+      </section>
+    </main>
+
+    <footer class="app-footer muted">
+      <p>All data is stored locally in your browser (localStorage). No servers, no tracking.</p>
+    </footer>
+  </div>
+</body>
+</html>
