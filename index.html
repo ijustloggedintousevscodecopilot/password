@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Secure client-side password generator. No data leaves your browser." />
+  <meta name="color-scheme" content="light dark" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'none'; form-action 'none'" />
+  <link rel="icon" href="logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Password Generator — Local & Private</title>
+  <script src="auth.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <noscript>
+    <div class="noscript">This password generator requires JavaScript to run locally. No data ever leaves your browser.</div>
+  </noscript>
+
+  <header class="app-header">
+    <img src="logo.svg" alt="" class="logo" />
+    <div>
+      <h1>Secure Password Generator</h1>
+      <p class="subtitle">All generation happens in your browser. No analytics, no tracking.</p>
+    </div>
+
+    <div class="spacer"></div>
+
+    <label class="theme-picker" title="Theme">
+      <span class="label">Theme</span>
+      <select id="themeSelect" class="theme-select" aria-label="Theme">
+        <option value="auto">Auto</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </label>
+  </header>
+
+  <main class="container">
+    <section class="card output-section" aria-labelledby="outputLabel">
+      <div class="output-row">
+        <label id="outputLabel" class="sr-only" for="password">Generated password</label>
+        <input id="password" type="password" class="password-field" readonly aria-readonly="true" aria-live="polite" />
+        <div class="btn-group">
+          <button id="toggleVisibility" class="btn secondary" type="button" aria-pressed="false" title="Show/Hide password">👁️</button>
+          <button id="copyBtn" class="btn primary" type="button" title="Copy to clipboard">Copy</button>
+          <button id="regenBtn" class="btn" type="button" title="Generate new password">Generate</button>
+          <button id="saveInlineBtn" class="btn" type="button" title="Save to vault" hidden>Save</button>
+        </div>
+      </div>
+
+      <div class="strength">
+        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Password strength">
+          <div class="fill" id="strengthFill" style="width: 0%"></div>
+        </div>
+        <div class="strength-info">
+          <span id="strengthText">—</span>
+          <span class="entropy" id="entropyText">~0 bits</span>
+        </div>
+      </div>
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="card" aria-labelledby="optionsTitle">
+      <h2 id="optionsTitle">Options</h2>
+
+      <div class="row">
+        <label for="length" class="label">Length</label>
+        <div class="length-controls">
+          <input id="length" type="range" min="8" max="64" value="16" step="1" />
+          <input id="lengthNumber" type="number" min="8" max="64" value="16" />
+        </div>
+      </div>
+
+      <div class="grid">
+        <label class="checkbox">
+          <input id="useLower" type="checkbox" checked />
+          <span>Lowercase (a-z)</span>
+        </label>
+        <label class="checkbox">
+          <input id="useUpper" type="checkbox" checked />
+          <span>Uppercase (A-Z)</span>
+        </label>
+        <label class="checkbox">
+          <input id="useNumbers" type="checkbox" checked />
+          <span>Numbers (0-9)</span>
+        </label>
+        <label class="checkbox">
+          <input id="useSymbols" type="checkbox" checked />
+          <span>Symbols (!@#…)</span>
+        </label>
+      </div>
+
+      <div class="grid">
+        <label class="checkbox">
+          <input id="excludeSimilar" type="checkbox" />
+          <span>Exclude similar (O,0,I,1,l)</span>
+        </label>
+        <label class="checkbox">
+          <input id="excludeAmbiguous" type="checkbox" />
+          <span>Exclude ambiguous ({}[]()/\&lt;&gt;`~,;:.")</span>
+        </label>
+      </div>
+
+      <p class="hint">Tip: For most uses, 16–24 characters with all sets is excellent.</p>
+    </section>
+
+    <section class="card" aria-labelledby="accountTitle" id="accountCard">
+      <div class="account-header">
+        <h2 id="accountTitle">Account & Vault</h2>
+        <div id="accountStatus" class="account-status">Not signed in</div>
+      </div>
+
+      <div id="authForms" class="auth-forms">
+        <div class="tabs" role="tablist" aria-label="Authentication">
+          <button class="tab active" data-tab="login" role="tab" aria-selected="true" aria-controls="loginPanel">Sign in</button>
+          <button class="tab" data-tab="register" role="tab" aria-selected="false" aria-controls="registerPanel">Create account</button>
+        </div>
+
+        <!-- Login -->
+        <form id="loginForm" class="form" role="tabpanel" aria-labelledby="loginTab" autocomplete="off">
+          <div class="grid2">
+            <label>
+              <span class="label">Username</span>
+              <input type="text" id="loginUser" class="text-input" required />
+            </label>
+            <label>
+              <span class="label">Master password</span>
+              <input type="password" id="loginPass" class="text-input" required />
+            </label>
+          </div>
+          <div class="btn-row">
+            <button class="btn primary" type="submit">Sign in</button>
+            <button id="forgotBtn" class="link-btn" type="button" title="Recover via email (if enabled)">Forgot password?</button>
+          </div>
+        </form>
+
+        <!-- Recovery -->
+        <form id="recoverForm" class="form hidden" role="tabpanel" autocomplete="off">
+          <div class="grid2">
+            <label>
+              <span class="label">Username</span>
+              <input type="text" id="recUsername" class="text-input" required />
+            </label>
+            <label>
+              <span class="label">Recovery PIN</span>
+              <input type="password" id="recPinLogin" class="text-input" required />
+            </label>
+          </div>
+          <p class="hint danger">Warning: this composes an email with your master password in plain text.</p>
+          <div class="btn-row">
+            <button class="btn primary" type="submit">Send recovery email</button>
+            <button id="backToLogin" class="btn" type="button">Back</button>
+          </div>
+        </form>
+
+        <!-- Register -->
+        <form id="registerForm" class="form hidden" role="tabpanel" aria-labelledby="registerTab" autocomplete="off">
+          <div class="grid2">
+            <label>
+              <span class="label">Username</span>
+              <input type="text" id="regUser" class="text-input" required />
+            </label>
+            <label>
+              <span class="label">Master password</span>
+              <input type="password" id="regPass" class="text-input" required />
+            </label>
+            <label>
+              <span class="label">Confirm password</span>
+              <input type="password" id="regPass2" class="text-input" required />
+            </label>
+          </div>
+
+          <div class="checkbox" style="margin-top:10px;">
+            <input id="enableRecovery" type="checkbox" />
+            <span>Enable “Forgot password” via email (advanced, not recommended)</span>
+          </div>
+
+          <div id="recoveryFields" class="grid2 hidden" style="margin-top:8px;">
+            <label>
+              <span class="label">Recovery email</span>
+              <input type="email" id="recEmail" class="text-input" placeholder="you@example.com" />
+            </label>
+            <label>
+              <span class="label">Recovery PIN</span>
+              <input type="password" id="recPin" class="text-input" placeholder="At least 6 characters" />
+            </label>
+            <label>
+              <span class="label">Confirm PIN</span>
+              <input type="password" id="recPin2" class="text-input" />
+            </label>
+          </div>
+
+          <p class="hint danger" id="recoveryWarning" style="display:none;">
+            If enabled, your master password can be recovered (encrypted with your Recovery PIN) and emailed. Email is not a secure channel.
+          </p>
+
+          <div class="btn-row">
+            <button class="btn primary" type="submit">Create account</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="vaultUI" class="vault-ui hidden">
+        <div class="signed-in-row">
+          <div>Signed in as <strong id="signedInUser"></strong></div>
+          <div class="btn-group">
+            <button id="signOutBtn" class="btn" type="button">Sign out</button>
+          </div>
+        </div>
+
+        <div class="save-row">
+          <input id="entryLabel" class="text-input" placeholder="Label (e.g., GitHub)" />
+          <input id="entryUser" class="text-input" placeholder="Username (optional)" />
+          <button id="saveBtn" class="btn primary" type="button">Save current password</button>
+        </div>
+
+        <div class="row">
+          <label for="search" class="label">Search</label>
+          <input id="search" class="text-input" placeholder="Filter items" />
+        </div>
+
+        <ul id="vaultList" class="vault-list"></ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Privacy-first: Network calls are blocked by policy and code. Your passwords never leave your device.</p>
+  </footer>
+</body>
+</html>
